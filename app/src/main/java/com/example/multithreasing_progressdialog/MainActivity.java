@@ -1,10 +1,13 @@
 package com.example.multithreasing_progressdialog;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,57 +29,23 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String[] files = {"https://bitcode.in/android/.demos.zip", "https://bitcode.in/java/.demos.zip"
                 };
-                new DownloadThread().execute(files);
+                new DownloadThread(MainActivity.this, new MyHandler()).execute(files);
             }
         });
     }
-    class DownloadThread extends AsyncTask<String, Integer, Float>{
-        private ProgressDialog progressDialog;
-
+    private class MyHandler extends Handler{
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressDialog = new ProgressDialog(MainActivity.this);
-            progressDialog.setTitle("Bitcode");
-            progressDialog.setMessage("Downloading");
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.show();
-        }
-
-        @Override
-        protected Float doInBackground(String... params) {
-            for(String file: params){
-                progressDialog.setMessage("Downloading " + file);
-
-                for(int i=0;i<100;i++){
-                    progressDialog.setProgress(i);
-
-                    Integer [] progress = new Integer[1];
-                    progress[0] = i;
-                    publishProgress(progress);
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Log.e("tag", " Downloading " + file + " " + i + "%");
-                }
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            if(msg.what == 1){
+                btnDownload.setText((int)msg.obj + "%");
             }
-            return 99.55f;
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            btnDownload.setText(values[0] + "%");
-        }
-
-        @Override
-        protected void onPostExecute(Float result) {
-            mt("res = " + result);
-            progressDialog.dismiss();
+            else{
+                btnDownload.setText("Res=" +(float)msg.obj);
+            }
         }
     }
+
     private void mt(String text){
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
